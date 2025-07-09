@@ -15,27 +15,22 @@ enum ColumnType {
     Type_Float64,
 };
 
-struct CStrHash {
-    size_t operator()(const char* s) const {
-        return std::hash<std::string>{}(s);
-    }
-};
-
-struct CStrEqual {
-    bool operator()(const char* a, const char* b) const {
-        return std::strcmp(a, b) == 0;
-    }
-};
-
 class CsvParser {
 public:
-    CsvParser(const std::string& path, Arena& arena);
+    CsvParser(
+        const std::string& path,
+        Arena& arena,
+        std::unordered_map<std::string, size_t>& fields
+    );
 
 
 private:
-    void readFile(std::string& path);
+    void loadCsv(std::string& path);
     inline static size_t typeSize(enum ColumnType t);
 
-    std::unordered_map<std::string, void*> parsedContent;
-    const size_t LINE_BUFFER = 512;
+    Arena& arena_;
+    std::unordered_map<std::string, size_t>& fields_;
+    std::unordered_map<std::string, void*> parsedContent_;
 };
+
+void loadCsv();

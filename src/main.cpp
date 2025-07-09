@@ -7,8 +7,7 @@
 #include "arena.hpp"
 
 int main() {
-
-    std::unordered_map<const char*, size_t, CStrHash, CStrEqual> fields = {
+    std::unordered_map<std::string, size_t> fields = {
         {"unix",  Type_uInt64},
         {"open",  Type_Float64},
         {"high",  Type_Float64},
