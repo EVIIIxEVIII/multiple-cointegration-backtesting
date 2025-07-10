@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "arena.hpp"
+#include "definitions.hpp"
 
 enum ColumnType {
     Type_Int32,
@@ -15,9 +16,10 @@ enum ColumnType {
     Type_Float64,
 };
 
-struct Value {
-    void* data;
+struct Column {
+    void*      data;
     ColumnType type;
+    u32        size;
 };
 
 struct CStrHash {
@@ -40,6 +42,7 @@ public:
         std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual>& fields
     );
 
+    std::unordered_map<const char*, Column, CStrHash, CStrEqual> parsedContent() { return parsedContent_; }
 
 private:
     void loadCsv(const std::string& path);
@@ -48,7 +51,7 @@ private:
 
     Arena& arena_;
     std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual>& fields_;
-    std::unordered_map<const char*, Value, CStrHash, CStrEqual> parsedContent_;
+    std::unordered_map<const char*, Column, CStrHash, CStrEqual> parsedContent_;
 };
 
 void loadCsv();

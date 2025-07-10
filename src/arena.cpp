@@ -5,7 +5,7 @@
 
 Arena::Arena(size_t size): size_(size) {
     constexpr size_t page_size = 4096;
-    start_ = (void*) malloc(size * sizeof(char));
+    start_ = (void*) std::aligned_alloc(64, size * sizeof(char));
 
     char* start = (char*) start_;
     for (size_t i = 0; i < size; i += page_size) {

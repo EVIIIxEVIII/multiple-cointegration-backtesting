@@ -72,6 +72,8 @@ int main() {
     CsvParser btcFile("data/Bitfinex_ETHUSD_d.csv", arena, fields);
     u64 end_mine = readCPUTimer();
 
+    auto data = btcFile.parsedContent();
+
     u64 gigabyte = 1024ull * 1024 * 1024;
     u64 size = Stat.st_size;
 

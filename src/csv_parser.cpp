@@ -1,6 +1,6 @@
 #include "csv_parser.hpp"
 #include "profiling/profiler.hpp"
-#include "profiling/timer.hpp"
+#include "fast_cast.hpp"
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -18,22 +18,33 @@ size_t CsvParser::typeSize(enum ColumnType t) {
 }
 
 void CsvParser::typeCast(ColumnType t, const char* value, void* out) {
+    bool ok = false;
     switch (t) {
-        case Type_Int32: *(int32_t*)out = static_cast<int32_t>(std::strtol(value, nullptr, 10));
+        case Type_Int32:
+            ok = fastcast::parse_int(value, *reinterpret_cast<int32_t*>(out));
             break;
-        case Type_Int64: *(int64_t*)out = static_cast<int64_t>(std::strtoll(value, nullptr, 10));
+        case Type_Int64:
+            ok = fastcast::parse_int(value, *reinterpret_cast<int64_t*>(out));
             break;
-        case Type_uInt32: *(uint32_t*)out = static_cast<uint32_t>(std::strtoul(value, nullptr, 10));
+        case Type_uInt32:
+            ok = fastcast::parse_int(value, *reinterpret_cast<uint32_t*>(out));
             break;
-        case Type_uInt64: *(uint64_t*)out = static_cast<uint64_t>(std::strtoull(value, nullptr, 10));
+        case Type_uInt64:
+            ok = fastcast::parse_int(value, *reinterpret_cast<uint64_t*>(out));
             break;
-        case Type_Float32: *(float*)out = static_cast<float>(std::strtof(value, nullptr));
+        case Type_Float32:
+            ok = fastcast::parse_float(value, *reinterpret_cast<float*>(out));
             break;
-        case Type_Float64: *(double*)out = std::strtod(value, nullptr);
+        case Type_Float64:
+            ok = fastcast::parse_float(value, *reinterpret_cast<double*>(out));
             break;
         default:
-            fprintf(stderr, "Unknown ColumnType in typeCast\n");
-            break;
+            fprintf(stderr, "Unknown ColumnType\n");
+            return;
+    }
+
+    if (!ok) {
+        fprintf(stderr, "Bad numeric token: \" %s \" \n", value);
     }
 }
 
@@ -139,7 +150,7 @@ void CsvParser::loadCsv(const std::string& path) {
     charIndex = 0;
 
     char value[MAX_VALUE_SIZE];
-    int rowNumer = 0;
+    u32 rowNumber = 0;
     int valueIndex = 0;
     bool copyActive = false;
     int nextTarget = headersOffsets[0];
@@ -152,15 +163,14 @@ void CsvParser::loadCsv(const std::string& path) {
                 case ',':
                 case '\n': {
                     if (copyActive) {
-                        value[charIndex] = '\0';
                         void* dst = static_cast<char*>(valuesStorages[valueIndex]) +
-                                     rowNumer * typeSize(columnTypes[valueIndex]);
+                                     rowNumber * typeSize(columnTypes[valueIndex]);
                         typeCast(columnTypes[valueIndex], value, dst);
                         ++valueIndex;
 
                         nextTarget = (valueIndex < headerIndex)
                                      ? headersOffsets[valueIndex]
-                                     : -1;     // sentinel: no more columns
+                                     : -1;
                         copyActive = false;
                     }
 
@@ -171,7 +181,7 @@ void CsvParser::loadCsv(const std::string& path) {
                         valueIndex = 0;
                         offset     = 0;
                         nextTarget = headersOffsets[0];
-                        ++rowNumer;
+                        ++rowNumber;
                     }
                     break;
                 }
@@ -189,7 +199,13 @@ void CsvParser::loadCsv(const std::string& path) {
     fclose(file);
 
     for (int i = 0; i < headerIndex; ++i) {
-        parsedContent_[headers[i]] = Value{valuesStorages[i], columnTypes[i]};
+        parsedContent_[headers[i]] = Column{
+            valuesStorages[i],
+            columnTypes[i],
+            rowNumber
+        };
     }
 }
+
+
 
