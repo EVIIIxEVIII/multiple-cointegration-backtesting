@@ -6,7 +6,6 @@ namespace constants {
     inline constexpr int ARENA_SIZE = 1024*1024;
 }
 
-
 typedef double   f64;
 typedef float    f32;
 

@@ -11,6 +11,7 @@ struct Arena {
     Arena(size_t size);
 
     void* allocate(size_t size);
+    char* allocate(const char* str);
 
     void reset() { offset_ = 0; }
     ~Arena() { free(start_); }

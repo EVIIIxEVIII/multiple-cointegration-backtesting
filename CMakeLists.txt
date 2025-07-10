@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
 project(pair_trading_backtest LANGUAGES CXX)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(fmt REQUIRED)
-add_executable(pair_trading_backtest src/main.cpp)
+find_package(fast-cpp-csv-parser REQUIRED)
+
+file(GLOB_RECURSE PAIR_TRADING_SRC CONFIGURE_DEPENDS src/*.cpp)
+
+add_executable(pair_trading_backtest ${PAIR_TRADING_SRC})
 
 target_include_directories(pair_trading_backtest
 	PUBLIC
@@ -12,5 +16,8 @@ target_include_directories(pair_trading_backtest
 		${Vulkan_INCLUDE_DIRS}
 )
 
-target_link_libraries(pair_trading_backtest PRIVATE fmt::fmt)
+target_link_libraries(pair_trading_backtest PRIVATE
+    fmt::fmt
+    fast-cpp-csv-parser::fast-cpp-csv-parser
+)
 

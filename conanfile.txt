@@ -1,5 +1,6 @@
 [requires]
 fmt/10.1.1
+fast-cpp-csv-parser/20191004
 
 [tool_requires]
 
