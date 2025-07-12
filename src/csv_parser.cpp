@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <sys/stat.h>
+#include <array>
 
 size_t CsvParser::typeSize(enum ColumnType t) {
     switch (t) {
@@ -19,6 +20,7 @@ size_t CsvParser::typeSize(enum ColumnType t) {
 
 void CsvParser::typeCast(ColumnType t, const char* value, void* out) {
     bool ok = false;
+
     switch (t) {
         case Type_Int32:
             ok = fastcast::parse_int(value, *reinterpret_cast<int32_t*>(out));
@@ -60,6 +62,7 @@ CsvParser::CsvParser(
     loadCsv(path);
 }
 
+
 void CsvParser::loadCsv(const std::string& path) {
     FILE* file = fopen(path.data(), "rb");
     if (file == NULL) {
@@ -67,11 +70,6 @@ void CsvParser::loadCsv(const std::string& path) {
         return;
     }
 
-    constexpr size_t BUF_SIZE   = 4096 * 10;
-    constexpr size_t MAX_HEADER = 1024;
-    constexpr size_t MAX_FIELD_SIZE = 64;
-    constexpr size_t MAX_FIELDS_NUM = 10;
-    constexpr size_t MAX_VALUE_SIZE = 32;
 
     char headerString[MAX_HEADER];
     if (!fgets(headerString, MAX_HEADER, file)) {
@@ -80,10 +78,10 @@ void CsvParser::loadCsv(const std::string& path) {
         return;
     }
 
-    char headers[MAX_FIELDS_NUM][MAX_FIELD_SIZE];
-    int headersOffsets[MAX_FIELDS_NUM];
-    char header[MAX_FIELD_SIZE];
-    ColumnType columnTypes[MAX_FIELDS_NUM];
+    std::array<std::array<char, MAX_FIELD_SIZE>, MAX_FIELDS_NUM> headers;
+    std::array<int, MAX_FIELDS_NUM> headersOffsets{};
+    std::array<char, MAX_FIELDS_NUM> header{};
+    std::array<ColumnType, MAX_FIELDS_NUM> columnTypes{};
 
     bool hitNewline = false;
     int charIndex = 0;
@@ -104,10 +102,10 @@ void CsvParser::loadCsv(const std::string& path) {
                 }
                 header[charIndex] = '\0';
 
-                if (fields_.find(header) != fields_.end()){
-                    strcpy(headers[headerIndex], header);
+                if (fields_.find(header.data()) != fields_.end()){
+                    strcpy(headers[headerIndex].data(), header.data());
 
-                    columnTypes[headerIndex] = static_cast<ColumnType>(fields_[header]);
+                    columnTypes[headerIndex] = static_cast<ColumnType>(fields_[header.data()]);
                     headersOffsets[headerIndex] = offset;
                     headerIndex++;
                 }
@@ -124,20 +122,19 @@ void CsvParser::loadCsv(const std::string& path) {
 
     }
 
-    struct stat Stat;
-    stat(path.data(), &Stat);
-
-    char rowString[MAX_FIELDS_NUM * MAX_FIELD_SIZE];
-    if (!fgets(rowString, MAX_FIELDS_NUM * MAX_FIELD_SIZE, file)) {
-        fclose(file);
-        printf("failed to read the first row!");
-        return;
-    }
-
     char buffer[BUF_SIZE];
-    size_t bytes_read = 0;
-    size_t count = (size_t)((f64)Stat.st_size / (f64)strlen(rowString) * 1.1);
     void* valuesStorages[MAX_FIELDS_NUM];
+    size_t bytes_read = 0;
+    size_t count      = 0;
+
+    while ((bytes_read = fread(buffer, sizeof(char), BUF_SIZE, file)) > 0) {
+        char* p = buffer;
+        char* end = buffer + bytes_read;
+        while ((p = (char*)memchr(p, '\n', end - p))) {
+            ++count;
+            ++p;
+        }
+    }
 
     for (int i = 0; i < headerIndex; ++i) {
         valuesStorages[i] = arena_.allocate(count * typeSize(columnTypes[i]));
@@ -150,10 +147,10 @@ void CsvParser::loadCsv(const std::string& path) {
     charIndex = 0;
 
     char value[MAX_VALUE_SIZE];
-    u32 rowNumber = 0;
-    int valueIndex = 0;
+    u32 rowNumber   = 0;
+    int valueIndex  = 0;
     bool copyActive = false;
-    int nextTarget = headersOffsets[0];
+    int nextTarget  = headersOffsets[0];
 
     while ((bytes_read = fread(buffer, sizeof(char), BUF_SIZE, file)) > 0) {
         for (size_t i = 0; i < bytes_read; ++i) {
@@ -199,11 +196,10 @@ void CsvParser::loadCsv(const std::string& path) {
     fclose(file);
 
     for (int i = 0; i < headerIndex; ++i) {
-        parsedContent_[headers[i]] = Column{
-            valuesStorages[i],
-            columnTypes[i],
-            rowNumber
-        };
+        Column col = { .type = columnTypes[i], .size = rowNumber };
+        col.setData(valuesStorages[i], columnTypes[i]);
+
+        parsedContent_[headers[i].data()] = col;
     }
 }
 
