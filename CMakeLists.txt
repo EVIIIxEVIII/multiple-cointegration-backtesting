@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(pair_trading_backtest LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 
 find_package(Eigen3 REQUIRED)
 find_package(FastFloat REQUIRED)

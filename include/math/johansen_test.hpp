@@ -1,19 +1,39 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include "csv_parser.hpp"
+#include "definitions.hpp"
 
 
 class JohansenTest {
 
 public:
     JohansenTest(Eigen::MatrixXd& data, i32 p);
+    f64 getTraceStat(i32 rank);
+    f64 maxEigenStat(i32 rank);
+    Eigen::VectorXd getEigenvalues();
 
 private:
-    void buildRegressorMatrix();
+    void buildRegressionMatrices();
+    void regress();
+    void buildCovarianceMatrices();
+    void solveGenerEigenvalProb();
 
     Eigen::MatrixXd data_;
     Eigen::MatrixXd Z_;
-    int p_ = 0;
+    Eigen::MatrixXd deltaX_;
+    Eigen::MatrixXd laggedX_;
 
+    // residual matrices
+    Eigen::MatrixXd R_;
+    Eigen::MatrixXd S_;
+
+    // covariance matrices
+    Eigen::MatrixXd S_00;
+    Eigen::MatrixXd S_11;
+    Eigen::MatrixXd S_01;
+    Eigen::MatrixXd S_10;
+
+    Eigen::VectorXd lambda_;
+
+    int p_ = 0;
 };
