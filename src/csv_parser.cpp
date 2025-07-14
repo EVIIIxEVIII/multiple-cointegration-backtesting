@@ -84,12 +84,12 @@ void CsvParser::loadCsv(const std::string& path) {
     std::array<ColumnType, MAX_FIELDS_NUM> columnTypes{};
 
     bool hitNewline = false;
-    int charIndex = 0;
+    size_t charIndex = 0;
     int headerIndex = 0;
     int headerSize = 0;
     int offset = 0;
 
-    for (int i = 0; i < MAX_HEADER && !hitNewline; ++i) {
+    for (size_t i = 0; i < MAX_HEADER && !hitNewline; ++i) {
         char c = headerString[i];
         if (c == '\0') break;
 
@@ -196,7 +196,7 @@ void CsvParser::loadCsv(const std::string& path) {
     fclose(file);
 
     for (int i = 0; i < headerIndex; ++i) {
-        Column col = { .type = columnTypes[i], .size = rowNumber };
+        Column col = { columnTypes[i], rowNumber, {nullptr} };
         col.setData(valuesStorages[i], columnTypes[i]);
 
         parsedContent_[headers[i].data()] = col;

@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 namespace constants {
-    inline constexpr int ARENA_SIZE = 1024*1024;
+    inline constexpr int ARENA_SIZE = 1024*1024*10; // 10mb
 }
 
 typedef double   f64;

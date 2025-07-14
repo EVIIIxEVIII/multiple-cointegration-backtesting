@@ -1,23 +1,18 @@
 #include <cassert>
-#include <fmt/core.h>
 #include <unordered_map>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <csv.h>
+#include <Eigen/Dense>
 
 #include "csv_parser.hpp"
 #include "definitions.hpp"
 #include "arena.hpp"
-#include "profiling/profiler.hpp"
-#include "profiling/timer.hpp"
-
+#include "math/johansen_test.hpp"
 
 int main() {
     Arena arena(constants::ARENA_SIZE);
     struct stat Stat;
     stat("data/Bitfinex_ETHUSD_d.csv", &Stat);
-
-    u64 cpuFreq = estimateCPUFreq(1000);
 
     std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual> fields = {
         {arena.allocate("unix"),  Type_Int64},
@@ -27,15 +22,25 @@ int main() {
         {arena.allocate("close"), Type_Float64},
     };
 
-    CsvParser btcFile("data/Bitfinex_ETHUSD_d.csv", arena, fields);
-    std::unordered_map<const char*, Column, CStrHash, CStrEqual> data = btcFile.parsedContent();
+    CsvParser btcFile("data/BTC_USD.csv", arena, fields);
+    auto btcData = btcFile.parsedContent();
 
-    Column openCol = data["open"];
-    f64* open = openCol.as_f64();
+    CsvParser ethFile("data/BTC_USD.csv", arena, fields);
+    auto ethData = ethFile.parsedContent();
 
-    for (int i = 0; i < openCol.size; ++i) {
-        printf("%f \n", open[i]);
+    std::array<Column, 2> rawData{ btcData["close"], ethData["close"] };
+    auto dataCount = std::min(btcData["close"].size, ethData["close"].size);
+    Eigen::MatrixXd data(rawData.size(), dataCount);
+
+    printf("Loaded %lu data points \n", dataCount);
+
+    for (size_t i = 0; i < rawData.size(); ++i)  {
+        for(size_t j = 0; j < dataCount; ++j) {
+            data(i, j) = rawData[i].as_f64()[dataCount - j - 1];
+        }
     }
+
+    JohansenTest test(data, 3);
 
     return 0;
 }

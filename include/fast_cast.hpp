@@ -14,7 +14,7 @@ inline bool parse_int(const char* s, Int& out) {
 template<typename Float>
 inline bool parse_float(const char* s, Float& out)
 {
-    auto res = fast_float::from_chars(s, s + 48, out);
+    auto res = fast_float::from_chars(s, s + 31, out);
     return res.ec == std::errc();
 }
 
