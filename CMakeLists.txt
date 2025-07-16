@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(pair_trading_backtest LANGUAGES CXX)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 
 find_package(Eigen3 REQUIRED)
@@ -23,9 +23,9 @@ target_link_libraries(pair_trading_backtest PRIVATE
 )
 
 target_compile_options(pair_trading_backtest PRIVATE
-    -march=native
-    -ffp-contract=fast
-    -O3
+    -g
+    #-march=native
+    #-ffp-contract=fast
     -Wall
     -Wextra
     -Wpedantic

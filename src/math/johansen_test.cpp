@@ -3,13 +3,18 @@
 #include <Eigen/Dense>
 #include <cmath>
 
+#include <Eigen/src/Core/IO.h>
+#include <iostream>
 
+
+Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
 JohansenTest::JohansenTest(Eigen::MatrixXd& data, i32 p) : data_(data), p_(p)
 {
     buildRegressionMatrices();
     regress();
     buildCovarianceMatrices();
     solveGenerEigenvalProb();
+    return;
 }
 
 void JohansenTest::solveGenerEigenvalProb() {
@@ -48,20 +53,18 @@ void JohansenTest::buildCovarianceMatrices() {
     S_10 = S_01.transpose();
 }
 
-
 Eigen::VectorXd JohansenTest::getEigenvalues() {
     return lambda_;
 }
 
-
 void JohansenTest::regress() {
-    Eigen::MatrixXd ZZ_trans = Z_ * Z_.transpose();
+Eigen::MatrixXd ZZt = Z_ * Z_.transpose();
 
-    Eigen::MatrixXd gamma = deltaX_ * Z_.transpose() * (ZZ_trans).inverse();
-    Eigen::MatrixXd phi = laggedX_ * Z_.transpose() * (ZZ_trans).inverse();
+    Eigen::MatrixXd beta_gamma = ZZt.ldlt().solve(Z_ * deltaX_.transpose());
+    Eigen::MatrixXd beta_phi   = ZZt.ldlt().solve(Z_ * laggedX_.transpose());
 
-    R_ = deltaX_ - gamma*Z_;
-    S_ = laggedX_ - phi * Z_;
+    R_ = deltaX_  - beta_gamma.transpose() * Z_;
+    S_ = laggedX_ - beta_phi  .transpose() * Z_;
 }
 
 void JohansenTest::buildRegressionMatrices() {
@@ -69,15 +72,14 @@ void JohansenTest::buildRegressionMatrices() {
     int T = data_.rows();
 
     Eigen::MatrixXd dx = data_.bottomRows(T - 1) - data_.topRows(T - 1);
-    deltaX_  = dx.bottomRows(T - p_);
-    laggedX_ = data_.middleRows(p_ - 1, T - p_);
+    deltaX_  = dx.middleRows(p_ - 1, T - p_).transpose();
+    laggedX_ = data_.middleRows(p_ - 1, T - p_).transpose();
 
     Z_.resize((p_ - 1) * n, T - p_);
 
-    for (int k = 1; k < p_; ++k) {
-        Z_.block(n * (k - 1), 0, n, T - p_) = dx.block((p_ - 1) - k, 0, T - p_, n).transpose();
+    for(int k = 1; k < p_; ++k) {
+        Z_.block((k - 1) * n, 0, n, T - p_) = dx.middleRows(p_ - 1 - k, T - p_).transpose();
     }
 }
-
 
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-BUILD_TYPE=Release
+BUILD_TYPE=Debug
 BUILD_DIR="build/$BUILD_TYPE"
 
 echo "🔄 Cleaning old build..."

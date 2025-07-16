@@ -33,6 +33,7 @@ private:
     Eigen::MatrixXd S_01;
     Eigen::MatrixXd S_10;
 
+    // eigenvalues
     Eigen::VectorXd lambda_;
 
     int p_ = 0;
