@@ -94,6 +94,9 @@ void CsvParser::loadCsv(const std::string& path) {
         if (c == '\0') break;
 
         switch (c) {
+            case '\r':
+                break;
+
             case ',':
             case '\n':
                 if(c == '\n') {
@@ -160,6 +163,7 @@ void CsvParser::loadCsv(const std::string& path) {
                 case ',':
                 case '\n': {
                     if (copyActive) {
+                        value[charIndex] = '\0';
                         void* dst = static_cast<char*>(valuesStorages[valueIndex]) +
                                      rowNumber * typeSize(columnTypes[valueIndex]);
                         typeCast(columnTypes[valueIndex], value, dst);

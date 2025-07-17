@@ -12,17 +12,22 @@
 int main() {
     Arena arena(constants::ARENA_SIZE);
 
-    std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual> fields = {
-        {arena.allocate("A"),  Type_Float64},
-        {arena.allocate("B"),  Type_Float64},
-        {arena.allocate("C"),  Type_Float64},
+    std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual> gldFields = {
+        {arena.allocate("data"),  Type_Float64},
     };
 
-    CsvParser testFile("data/test_data.csv", arena, fields);
-    auto testData = testFile.parsedContent();
+    std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual> slvFields = {
+        {arena.allocate("data"),  Type_Float64},
+    };
 
-    std::array<Column, 3> rawData{ testData["A"], testData["B"], testData["C"] };
-    size_t dataCount = testData["A"].size;
+    CsvParser gld("data/gld.csv", arena, gldFields);
+    CsvParser slv("data/slv.csv", arena, slvFields);
+
+    auto gldData = gld.parsedContent();
+    auto slvData = slv.parsedContent();
+
+    std::array<Column, 2> rawData{ gldData["data"], slvData["data"] };
+    size_t dataCount = gldData["data"].size;
 
     Eigen::MatrixXd data(dataCount, rawData.size());
     for (size_t i = 0; i < rawData.size(); ++i)  {
@@ -31,21 +36,18 @@ int main() {
         }
     }
 
-    JohansenTest test(data, 2);
+    int lags = 2;
+    for (int i = -1; i < 2; ++i) {
+        JohansenTest test(data, lags, i);
+        Eigen::VectorXd eigenvalues = test.getEigenvalues();
 
-    Eigen::VectorXd eigenvalues = test.getEigenvalues();
-
-    printf("Eigenvalues: [");
-    for (int i = 0; i < eigenvalues.size(); ++i) {
-        printf(" %f ", eigenvalues[i]);
+        printf("det_order=%d: ", i);
+        printf("Eigenvalues: [");
+        for (int i = 0; i < eigenvalues.size(); ++i) {
+            printf(" %.15f ", eigenvalues[i]);
+        }
+        printf("]\n");
     }
-    printf("]\n");
-
-    //printf("Max eigenvalues: [");
-    //for (int i = 0; i < 3; ++i) {
-    //    printf(" %f ", test.maxEigenStat(i));
-    //}
-    //printf("]\n");
 
     return 0;
 }

@@ -20,6 +20,7 @@ target_include_directories(pair_trading_backtest
 target_link_libraries(pair_trading_backtest PRIVATE
     Eigen3::Eigen
     FastFloat::fast_float
+    gsl gslcblas
 )
 
 target_compile_options(pair_trading_backtest PRIVATE
@@ -29,5 +30,5 @@ target_compile_options(pair_trading_backtest PRIVATE
     -Wall
     -Wextra
     -Wpedantic
-    -Werror
+    #-Werror
 )

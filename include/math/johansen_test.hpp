@@ -3,11 +3,10 @@
 #include <Eigen/Dense>
 #include "definitions.hpp"
 
-
 class JohansenTest {
 
 public:
-    JohansenTest(Eigen::MatrixXd& data, i32 p);
+    JohansenTest(Eigen::MatrixXd& data, i32 p, i8 detOrder);
     f64 getTraceStat(i32 rank);
     f64 maxEigenStat(i32 rank);
     Eigen::VectorXd getEigenvalues();
@@ -36,5 +35,6 @@ private:
     // eigenvalues
     Eigen::VectorXd lambda_;
 
-    int p_ = 0;
+    i32 p_ = 0;
+    i8  detOrder_ = 0;
 };
