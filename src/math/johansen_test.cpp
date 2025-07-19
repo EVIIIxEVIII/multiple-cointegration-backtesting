@@ -1,9 +1,8 @@
 #include "math/johansen_test.hpp"
 
 #include <Eigen/Dense>
-#include <cmath>
-
 #include <Eigen/src/Core/IO.h>
+#include <cmath>
 
 Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
 JohansenTest::JohansenTest(
@@ -27,21 +26,33 @@ void JohansenTest::solveGenerEigenvalProb() {
     Eigen::MatrixXd eigenvectors = ges.eigenvectors();
 
     lambda_ = eigenvalues.reverse();
+    cointegrationVecs_ = eigenvectors;
 }
 
-f64 JohansenTest::maxEigenStat(i32 rank) {
-    if (rank >= lambda_.size()) return 0.0;
-    return -(data_.rows() - p_) * std::log(1 - lambda_[rank]);
-}
+Eigen::VectorXd JohansenTest::maxEigenStat() {
+    Eigen::VectorXd maxEigenStat;
+    maxEigenStat.resize(lambda_.size());
 
-f64 JohansenTest::getTraceStat(i32 rank) {
-    if (rank >= lambda_.size()) return 0.0;
-
-    f64 traceStat = 0.0;
-    for (int i = rank; i < lambda_.size(); ++i) {
-        traceStat += std::log(1.0 - lambda_[i]);
+    for (int i = 0; i < lambda_.size(); ++i) {
+        maxEigenStat[i] = -(data_.rows() - p_) * std::log(1 - lambda_[i]);
     }
-    traceStat *= -(data_.rows() - p_);
+
+    return maxEigenStat;
+}
+
+Eigen::VectorXd JohansenTest::traceStat() {
+    Eigen::VectorXd traceStat;
+    traceStat.resize(lambda_.size());
+
+    Eigen::VectorXd logTerms = (1.0 - lambda_.array()).log();
+
+    f64 totalLogSum = logTerms.sum();
+
+    f64 cumulative = 0.0;
+    for (int j = 0; j < lambda_.size(); ++j) {
+        if(j > 0) cumulative += logTerms[j - 1];
+        traceStat[j] = -(data_.rows() - p_) * (totalLogSum - cumulative);
+    }
 
     return  traceStat;
 }
@@ -54,7 +65,7 @@ void JohansenTest::buildCovarianceMatrices() {
     S_10 = S_01.transpose();
 }
 
-Eigen::VectorXd JohansenTest::getEigenvalues() {
+Eigen::VectorXd JohansenTest::eigenvalues() {
     return lambda_;
 }
 

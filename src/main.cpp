@@ -39,7 +39,10 @@ int main() {
     int lags = 2;
     for (int i = -1; i < 2; ++i) {
         JohansenTest test(data, lags, i);
-        Eigen::VectorXd eigenvalues = test.getEigenvalues();
+        Eigen::VectorXd eigenvalues          = test.eigenvalues();
+        Eigen::VectorXd maxEigenStat         = test.maxEigenStat();
+        Eigen::VectorXd traceStat            = test.traceStat();
+        Eigen::MatrixXd cointegrationVectors = test.cointegrationVectors();
 
         printf("det_order=%d: ", i);
         printf("Eigenvalues: [");
@@ -47,6 +50,29 @@ int main() {
             printf(" %.15f ", eigenvalues[i]);
         }
         printf("]\n");
+
+        printf("Max eigenvalue stat: [");
+        for (int i = 0; i < maxEigenStat.size(); ++i) {
+            printf(" %.15f ", maxEigenStat[i]);
+        }
+        printf("]\n");
+
+        printf("Trace stat: [");
+        for (int i = 0; i < traceStat.size(); ++i) {
+            printf(" %.15f ", traceStat[i]);
+        }
+        printf("]\n");
+
+        printf("Cointegration vectors: \n");
+        for (int i = 0; i < cointegrationVectors.rows(); ++i) {
+            printf("[ ");
+            for (int j = 0; j < cointegrationVectors.cols(); ++j) {
+                printf(" %f ", cointegrationVectors.row(i)[j]);
+            }
+            printf(" ]\n");
+        }
+
+        printf("----------------------------------------\n");
     }
 
     return 0;

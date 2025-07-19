@@ -11,8 +11,7 @@ stock2 = pd.read_csv("data/test_data2.csv");
 asset1 = []
 data = np.column_stack((stock1['data'], stock2['data']))
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    for i in range(-1, 2):
-        result = coint_johansen(data, det_order=i, k_ar_diff=1)
-        print(f"det_order={i}: Eigenvalues:", result.eig)
+result = coint_johansen(data, det_order=0, k_ar_diff=1)
+print("Critical values (trace):", result.cvt)
+print("Critical values (max eigen):", result.cvm)
+print("----------------------------------------");
