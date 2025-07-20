@@ -53,27 +53,15 @@ struct Column {
     f64 *as_f64() { COL_ASSERT(type, Type_Float64); return data.f64; }
 };
 
-struct CStrHash {
-    size_t operator()(const char* s) const {
-        return std::hash<std::string>{}(s);
-    }
-};
-
-struct CStrEqual {
-    bool operator()(const char* a, const char* b) const {
-        return std::strcmp(a, b) == 0;
-    }
-};
-
 class CsvParser {
 public:
     CsvParser(
         const std::string& path,
         Arena& arena,
-        std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual>& fields
+        std::unordered_map<std::string, ColumnType>& fields
     );
 
-    std::unordered_map<const char*, Column, CStrHash, CStrEqual> parsedContent() { return parsedContent_; }
+    std::unordered_map<std::string, Column> parsedContent() { return parsedContent_; }
 
 private:
     static constexpr size_t BUF_SIZE   = 4096 * 10;
@@ -88,6 +76,6 @@ private:
     inline static void typeCast(enum ColumnType t, const char* value, void* out);
 
     Arena& arena_;
-    std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual>& fields_;
-    std::unordered_map<const char*, Column, CStrHash, CStrEqual> parsedContent_;
+    std::unordered_map<std::string, ColumnType>& fields_;
+    std::unordered_map<std::string, Column> parsedContent_;
 };

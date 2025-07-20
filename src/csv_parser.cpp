@@ -54,7 +54,7 @@ void CsvParser::typeCast(ColumnType t, const char* value, void* out) {
 CsvParser::CsvParser(
     const std::string& path,
     Arena& arena,
-    std::unordered_map<const char*, ColumnType, CStrHash, CStrEqual>& fields
+    std::unordered_map<std::string, ColumnType>& fields
 ):
     arena_{arena},
     fields_{fields}
@@ -203,7 +203,7 @@ void CsvParser::loadCsv(const std::string& path) {
         Column col = { columnTypes[i], rowNumber, {nullptr} };
         col.setData(valuesStorages[i], columnTypes[i]);
 
-        parsedContent_[headers[i].data()] = col;
+        parsedContent_[std::string(headers[i].data())] = col;
     }
 }
 

@@ -17,11 +17,56 @@ JohansenTest::JohansenTest(
     return;
 }
 
-void JohansenTest::solveGenerEigenvalProb() {
-    Eigen::LLT<Eigen::MatrixXd> llt(S_00);
-    Eigen::MatrixXd A = S_10 * llt.solve(S_01);
+Eigen::MatrixXd JohansenTest::cvt() {
+    if(!lambda_.size()) throw std::runtime_error("In order to get the critical values you have to run the test first!");
+    Eigen::MatrixXd cvtMatrix(lambda_.size(), 3);
 
-    Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> ges(A, S_11);
+    auto& criticalVals = [&]() -> const std::array<std::array<f64, 3>, 12>& {
+        switch(detOrder_) {
+            case -1: return cvtP0_;
+            case 0: return cvtP1_;
+            case 1: return cvtP2_;
+            default: throw std::runtime_error("A wrong deterministic trend assumption was selected!");
+        }
+    }();
+
+    for (int i = lambda_.size() - 1; i >= 0; --i) {
+        for (int j = 0; j < 3; ++j) {
+            cvtMatrix(lambda_.size() - i - 1, j) = criticalVals[i][j];
+        }
+    }
+
+    return cvtMatrix;
+}
+
+Eigen::MatrixXd JohansenTest::cvm() {
+    if(!lambda_.size()) throw std::runtime_error("In order to get the critical values you have to run the test first!");
+    Eigen::MatrixXd cvmMatrix(lambda_.size(), 3);
+
+    auto& criticalVals = [&]() -> const std::array<std::array<f64, 3>, 12>& {
+        switch(detOrder_) {
+            case -1: return cvmP0_;
+            case 0: return cvmP1_;
+            case 1: return cvmP2_;
+            default: throw std::runtime_error("A wrong deterministic trend assumption was selected!");
+        }
+    }();
+
+    for (int i = lambda_.size() - 1; i >= 0; --i) {
+        for (int j = 0; j < 3; ++j) {
+            cvmMatrix(lambda_.size() - i - 1, j) = criticalVals[i][j];
+        }
+    }
+
+    return cvmMatrix;
+}
+
+void JohansenTest::solveGenerEigenvalProb() {
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(S_00_, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::MatrixXd S_00_pinv = svd.solve(Eigen::MatrixXd::Identity(S_00_.rows(), S_00_.cols()));
+    Eigen::MatrixXd A = S_10_ * (S_00_pinv * S_01_);
+
+    Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> ges(A, S_11_);
     Eigen::VectorXd eigenvalues = ges.eigenvalues();
     Eigen::MatrixXd eigenvectors = ges.eigenvectors();
 
@@ -59,10 +104,10 @@ Eigen::VectorXd JohansenTest::traceStat() {
 
 void JohansenTest::buildCovarianceMatrices() {
     f64 normalization = 1./(data_.rows() - p_);
-    S_00 = normalization * R_ * R_.transpose();
-    S_11 = normalization * S_ * S_.transpose();
-    S_01 = normalization * R_ * S_.transpose();
-    S_10 = S_01.transpose();
+    S_00_ = normalization * R_ * R_.transpose();
+    S_11_ = normalization * S_ * S_.transpose();
+    S_01_ = normalization * R_ * S_.transpose();
+    S_10_ = S_01_.transpose();
 }
 
 Eigen::VectorXd JohansenTest::eigenvalues() {
@@ -70,7 +115,7 @@ Eigen::VectorXd JohansenTest::eigenvalues() {
 }
 
 void JohansenTest::regress() {
-Eigen::MatrixXd ZZt = Z_ * Z_.transpose();
+    Eigen::MatrixXd ZZt = Z_ * Z_.transpose();
 
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(ZZt, Eigen::ComputeThinU | Eigen::ComputeThinV);
     Eigen::MatrixXd ZZt_pinv = svd.solve(Eigen::MatrixXd::Identity(ZZt.rows(), ZZt.cols()));
